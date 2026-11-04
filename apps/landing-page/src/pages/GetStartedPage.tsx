@@ -23,11 +23,13 @@ type StoreLinkProps = {
 };
 
 function StoreLink({ icon, label, url }: StoreLinkProps) {
+  const absoluteUrl = url ? new URL(url, window.location.href).href : undefined;
+
   return (
     <div className="store-link">
       <div className="store-qr" aria-label={url ? `QR code for ${label}` : `${label} link coming soon`}>
-        {url ? (
-          <QRCodeSVG bgColor="#FCFBF7" fgColor="#173F35" level="M" marginSize={1} size={108} value={url} />
+        {absoluteUrl ? (
+          <QRCodeSVG bgColor="#FCFBF7" fgColor="#173F35" level="M" marginSize={1} size={108} value={absoluteUrl} />
         ) : (
           <div className="grid size-full place-items-center rounded-xl border border-dashed border-line bg-ivory text-muted">
             <QrCode size={28} strokeWidth={1.4} />
@@ -39,7 +41,7 @@ function StoreLink({ icon, label, url }: StoreLinkProps) {
         <p className="mt-1 text-xs leading-5 text-muted">{url ? "Scan the code or open the link." : "Link coming soon."}</p>
       </div>
       {url ? (
-        <a className="store-action" href={url} rel="noreferrer" target="_blank" aria-label={`Open ${label}`}>
+        <a className="store-action" href={absoluteUrl} rel="noreferrer" target="_blank" aria-label={`Open ${label}`}>
           <ExternalLink size={15} />
         </a>
       ) : (
@@ -95,7 +97,9 @@ export function GetStartedPage() {
                 <span className="text-forest">for your next round?</span>
               </h1>
               <p className="mx-auto mt-7 max-w-2xl text-lg leading-8 text-muted">
-                Choose the experience that fits your role. Android APK download links will appear here when the preview is ready; App Store availability will follow.
+                Choose the experience that fits your role. {installLinks.golfer.androidApk || installLinks.caddie.androidApk
+                  ? "Download the Android preview below; App Store availability will follow."
+                  : "Android APK download links will appear here when the preview is ready; App Store availability will follow."}
               </p>
             </div>
 

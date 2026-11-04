@@ -482,9 +482,14 @@ button {
 
   .role-panel {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: clamp(3rem, 7vw, 7rem);
     padding: clamp(1.35rem, 5vw, 4.5rem);
     animation: role-panel-in 350ms ease-out;
+  }
+
+  .role-panel > * {
+    min-width: 0;
   }
 
   .role-panel-copy h3 {
@@ -690,7 +695,7 @@ button {
 
   .golfer-course-summary {
     display: grid;
-    grid-template-columns: 4rem 1fr auto;
+    grid-template-columns: 4rem minmax(0, 1fr) auto;
     align-items: center;
     gap: 0.8rem;
     margin-top: 1.2rem;
@@ -1632,6 +1637,17 @@ button {
   .role-panel {
     gap: 2rem;
     padding: 1.25rem;
+  }
+
+  .landing-product .section-title {
+    font-size: clamp(2.25rem, 9.5vw, 3rem);
+    line-height: 1.06;
+  }
+
+  .role-panel-copy h3 {
+    font-size: clamp(1.75rem, 7.5vw, 2.5rem);
+    line-height: 1.08;
+    overflow-wrap: anywhere;
   }
 
   .role-flow-list {
