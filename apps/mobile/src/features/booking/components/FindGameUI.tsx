@@ -2,10 +2,9 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import type { Caddie, GolfCourse } from "@nobogey/contracts";
 import { Stack } from "expo-router";
 import type { PropsWithChildren } from "react";
-import { Image, ImageBackground, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { formatTeeTime } from "@nobogey/utils";
-import homeCourseHero from "../../../../assets/images/home-course-hero.jpg";
 import { backToPreviousPage } from "../../../ui/navigation";
 import { NoBogeyWordmark } from "../../../ui/NoBogeyWordmark";
 import { localCaddiePlaceholder, localCoursePlaceholder } from "../../../ui/local-image-placeholders";
@@ -39,17 +38,17 @@ export function FindGameScreen({ step, title, description, actionLabel, actionDi
   const { width } = useWindowDimensions();
   const gutter = Math.max(16, Math.min(24, width * 0.05));
   const titleSize = Math.max(27, Math.min(34, width * 0.08));
-  return <SafeAreaView edges={["top", "bottom"]} style={styles.safe}>
+  return <SafeAreaView edges={["top", "bottom", "left", "right"]} style={styles.safe}>
     <Stack.Screen options={{ headerShown: false, title: "Find a Game" }} />
     <ScrollView contentContainerStyle={styles.scrollContent} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
-        <ImageBackground imageStyle={styles.heroImage} source={homeCourseHero} resizeMode="cover" style={styles.hero}>
+        <View style={styles.hero}>
           <View style={[styles.heroOverlay, { paddingHorizontal: gutter }]}>
             <View style={styles.heroTop}><NoBogeyWordmark style={styles.brand} /><Pressable accessibilityLabel="Go back" accessibilityRole="button" hitSlop={8} onPress={onBack ?? (() => backToPreviousPage("/golfer/home"))} style={({ pressed }) => [styles.back, pressed && styles.pressed]}><MaterialCommunityIcons color={flowColors.forest} name="arrow-left" size={21} /></Pressable></View>
-            <Text accessibilityRole="header" style={[styles.title, { fontSize: titleSize, lineHeight: titleSize * 1.12 }]}>{title}</Text>
+            <Text accessibilityRole="header" style={[styles.title, { fontSize: titleSize, lineHeight: titleSize * 1.2 }]}>{title}</Text>
             <Text style={styles.description}>{description}</Text>
           </View>
-        </ImageBackground>
+        </View>
         <View style={{ paddingHorizontal: gutter }}><BookingProgress step={step} /></View>
         <View style={[styles.main, { paddingHorizontal: gutter }]}>{children}</View>
       </View>
@@ -66,7 +65,7 @@ export function BookingProgress({ step }: { step: Step }) {
       const number = index + 1;
       const complete = number < phase;
       const current = number === phase;
-      return <View key={label} style={styles.progressItem}><View style={styles.progressTop}>{index > 0 ? <View style={[styles.connector, number <= phase && styles.connectorActive]} /> : <View style={styles.connectorPlaceholder} />}<View style={[styles.progressCircle, (complete || current) && styles.progressCircleActive]}>{complete ? <MaterialCommunityIcons color="#FFFFFF" name="check" size={16} /> : <Text style={[styles.progressNumber, current && styles.progressNumberActive]}>{number}</Text>}</View>{index < labels.length - 1 ? <View style={[styles.connector, complete && styles.connectorActive]} /> : <View style={styles.connectorPlaceholder} />}</View><Text style={[styles.progressLabel, current && styles.progressLabelActive]}>{number}. {label}</Text></View>;
+      return <View key={label} style={styles.progressItem}><View style={styles.progressTop}>{index > 0 ? <View style={[styles.connector, number <= phase && styles.connectorActive]} /> : <View style={styles.connectorPlaceholder} />}<View style={[styles.progressCircle, (complete || current) && styles.progressCircleActive]}>{complete ? <MaterialCommunityIcons color="#FFFFFF" name="check" size={16} /> : <Text style={[styles.progressNumber, current && styles.progressNumberActive]}>{number}</Text>}</View>{index < labels.length - 1 ? <View style={[styles.connector, complete && styles.connectorActive]} /> : <View style={styles.connectorPlaceholder} />}</View><Text style={[styles.progressLabel, current && styles.progressLabelActive]}>{label}</Text></View>;
     })}
   </View>;
 }
@@ -127,28 +126,27 @@ export function ReviewSection({ title, onEdit, children }: PropsWithChildren<{ t
 const styles = StyleSheet.create({
   safe: { backgroundColor: flowColors.cream, flex: 1 },
   scrollContent: { flexGrow: 1, paddingBottom: 20 },
-  container: { alignSelf: "center", gap: 20, maxWidth: 680, width: "100%" },
-  hero: { backgroundColor: flowColors.sage, overflow: "hidden" },
-  heroImage: { width: "100%" },
-  heroOverlay: { backgroundColor: "rgba(252,251,247,0.86)", gap: 8, paddingBottom: 25, paddingTop: 14 },
-  heroTop: { alignItems: "center", marginBottom: 8, minHeight: 58, position: "relative" },
-  back: { alignItems: "center", backgroundColor: "#FFFFFF", borderRadius: 8, height: 44, justifyContent: "center", left: 0, position: "absolute", top: 7, width: 44 },
-  brand: { color: flowColors.forest, fontSize: 29, fontStyle: "italic", fontWeight: "900", letterSpacing: -1.4, lineHeight: 34 },
-  title: { color: flowColors.ink, fontWeight: "800", letterSpacing: -0.8 },
-  description: { color: "#454D47", fontSize: 15, lineHeight: 21, maxWidth: 490 },
-  progress: { flexDirection: "row", paddingVertical: 3 },
+  container: { alignSelf: "center", gap: 24, maxWidth: 680, width: "100%" },
+  hero: { backgroundColor: flowColors.cream },
+  heroOverlay: { gap: 12, paddingBottom: 4, paddingTop: 12 },
+  heroTop: { alignItems: "center", marginBottom: 12, minHeight: 58, position: "relative" },
+  back: { alignItems: "center", backgroundColor: flowColors.cream, borderColor: flowColors.border, borderWidth: 1, borderRadius: 999, height: 44, justifyContent: "center", left: 0, position: "absolute", top: 7, width: 44 },
+  brand: { color: flowColors.forest, fontSize: 25, fontStyle: "italic", fontWeight: "900", letterSpacing: -1.2, lineHeight: 32 },
+  title: { color: flowColors.forest, fontWeight: "600", letterSpacing: -1.1 },
+  description: { color: flowColors.muted, fontSize: 14, lineHeight: 23, maxWidth: 490 },
+  progress: { backgroundColor: "#F7F5EF", borderColor: flowColors.border, borderWidth: 1, borderRadius: 20, flexDirection: "row", paddingHorizontal: 8, paddingVertical: 16 },
   progressItem: { alignItems: "center", flex: 1, minWidth: 0 },
   progressTop: { alignItems: "center", flexDirection: "row", width: "100%" },
-  progressCircle: { alignItems: "center", backgroundColor: flowColors.cream, borderColor: "#A8ADA6", borderRadius: 99, borderWidth: 1, height: 30, justifyContent: "center", width: 30 },
+  progressCircle: { alignItems: "center", backgroundColor: flowColors.cream, borderColor: "#CACDC2", borderRadius: 999, borderWidth: 1, minHeight: 32, minWidth: 32, padding: 6, justifyContent: "center" },
   progressCircleActive: { backgroundColor: flowColors.forest, borderColor: flowColors.forest },
-  progressNumber: { color: flowColors.muted, fontSize: 13, fontWeight: "800" },
+  progressNumber: { color: flowColors.muted, fontSize: 12, fontWeight: "600" },
   progressNumberActive: { color: "#FFFFFF" },
-  progressLabel: { color: flowColors.muted, fontSize: 12, fontWeight: "600", marginTop: 6, textAlign: "center" },
-  progressLabelActive: { color: flowColors.forest, fontWeight: "800" },
+  progressLabel: { color: flowColors.muted, fontSize: 11, lineHeight: 17, fontWeight: "500", marginTop: 10, paddingHorizontal: 4, textAlign: "center" },
+  progressLabelActive: { color: flowColors.forest, fontWeight: "700" },
   connector: { backgroundColor: flowColors.border, flex: 1, height: 1 },
   connectorActive: { backgroundColor: flowColors.forest },
   connectorPlaceholder: { flex: 1 },
-  main: { gap: 18, paddingBottom: 10 },
+  main: { gap: 22, paddingBottom: 16 },
   sectionHeading: { gap: 5 },
   sectionTitle: { color: flowColors.ink, fontSize: 21, fontWeight: "800", letterSpacing: -0.4 },
   sectionDescription: { color: flowColors.muted, fontSize: 14, lineHeight: 20 },
@@ -175,11 +173,11 @@ const styles = StyleSheet.create({
   reviewTitle: { color: flowColors.forest, fontSize: 13, fontWeight: "800", letterSpacing: 0.4, textTransform: "uppercase" },
   editButton: { justifyContent: "center", minHeight: 44, paddingHorizontal: 5 },
   editText: { color: flowColors.forest, fontSize: 14, fontWeight: "800" },
-  sticky: { backgroundColor: "rgba(247,245,239,0.98)", borderTopColor: flowColors.border, borderTopWidth: 1, boxShadow: "0 -3px 12px rgba(23,63,53,0.06)", paddingHorizontal: 16, paddingVertical: 12 },
+  sticky: { backgroundColor: flowColors.cream, borderTopColor: flowColors.border, borderTopWidth: 1, paddingHorizontal: 20, paddingVertical: 14 },
   stickyInner: { alignSelf: "center", maxWidth: 648, width: "100%" },
-  action: { alignItems: "center", backgroundColor: flowColors.forest, borderRadius: 11, flexDirection: "row", gap: 8, justifyContent: "center", minHeight: 50, paddingHorizontal: 16 },
+  action: { alignItems: "center", backgroundColor: flowColors.forest, borderRadius: 999, flexDirection: "row", gap: 12, justifyContent: "center", minHeight: 54, paddingHorizontal: 20, paddingVertical: 14 },
   actionDisabled: { backgroundColor: "#8DA297" },
   actionPressed: { backgroundColor: "#10332B" },
-  actionText: { color: "#FFFFFF", fontSize: 16, fontWeight: "800" },
+  actionText: { color: "#FFFFFF", flexShrink: 1, fontSize: 14, fontWeight: "600", lineHeight: 21, textAlign: "center" },
   pressed: { opacity: 0.75 }
 });

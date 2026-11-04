@@ -1,8 +1,7 @@
 import type { Caddie, GolfCourse } from "@nobogey/contracts";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { formatMoney } from "@nobogey/utils";
-import { colors, spacing, typography } from "@nobogey/ui";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { mobilePalette } from "../../../ui/mobile-palette";
 import { CaddieAvatar } from "./CaddieAvatar";
@@ -11,31 +10,68 @@ type CaddieDetailSheetProps = { caddie: Caddie | null; course?: GolfCourse | und
 
 export function CaddieDetailSheet({ caddie, course, onBook, onClose, visible }: CaddieDetailSheetProps) {
   const insets = useSafeAreaInsets();
+  const { height, width, fontScale } = useWindowDimensions();
+  const sheetWidth = Math.min(720, width - insets.left - insets.right);
+  const compact = sheetWidth / fontScale < 340;
   if (!caddie) return null;
 
   return <Modal animationType="slide" onRequestClose={onClose} presentationStyle="overFullScreen" transparent visible={visible}>
     <View style={styles.backdrop}>
       <Pressable accessibilityLabel="Close caddie details" accessibilityRole="button" onPress={onClose} style={StyleSheet.absoluteFill} />
-      <View accessibilityLabel={`${caddie.displayName} booking details`} accessibilityViewIsModal style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+      <View accessibilityLabel={`${caddie.displayName} booking details`} accessibilityViewIsModal style={[styles.sheet, { height: Math.min(height * .9, height - insets.top - 12), width: sheetWidth, paddingBottom: Math.max(insets.bottom, 16) }]}>
         <View style={styles.handle} />
-        <View style={styles.sheetHeader}><View /><Pressable accessibilityLabel="Close caddie details" accessibilityRole="button" hitSlop={8} onPress={onClose} style={styles.closeButton}><MaterialCommunityIcons color={mobilePalette.forest} name="close" size={22} /></Pressable></View>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator>
-          <View style={styles.identity}><CaddieAvatar name={caddie.displayName} size="large" style={styles.avatar} /><View style={styles.identityCopy}><Text accessibilityRole="header" numberOfLines={1} selectable style={styles.name}>{caddie.displayName}</Text><View style={styles.verifiedLabel}><MaterialCommunityIcons color={mobilePalette.forest} name="check-circle" size={15} /><Text style={styles.classLabel}>Verified caddie</Text></View><Text selectable style={styles.meta}>{caddie.yearsExperience} years experience · {course?.name ?? "Course to be confirmed"}</Text><Text selectable style={styles.rating}><MaterialCommunityIcons color={mobilePalette.gold} name="star" size={16} /> {caddie.ratingAverage.toFixed(1)} · {caddie.reviewCount} {caddie.reviewCount === 1 ? "review" : "reviews"}</Text></View></View>
-          <View style={styles.stats}><Stat icon="cash-multiple" label="Rate" value={formatMoney(caddie.rate.amountInCentavos)} /><Stat icon="flag-outline" label="Rounds" value={String(caddie.completedRounds)} /></View>
+        <View style={styles.sheetHeader}><Text style={styles.sheetEyebrow}>MEET YOUR CADDIE</Text><Pressable accessibilityLabel="Close caddie details" accessibilityRole="button" hitSlop={8} onPress={onClose} style={styles.closeButton}><MaterialCommunityIcons color={mobilePalette.forest} name="close" size={22} /></Pressable></View>
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}>
+          <View style={[styles.identity, compact && styles.identityCompact]}><CaddieAvatar name={caddie.displayName} size="large" style={styles.avatar} /><View style={[styles.identityCopy, compact && styles.identityCopyCompact]}><Text accessibilityRole="header" selectable style={styles.name}>{caddie.displayName}</Text><View style={styles.verifiedLabel}><MaterialCommunityIcons color={mobilePalette.forest} name="check-circle" size={15} /><Text style={styles.classLabel}>Verified caddie</Text></View><Text selectable style={styles.meta}>{caddie.yearsExperience} years experience · {course?.name ?? "Course to be confirmed"}</Text><Text selectable style={styles.rating}><MaterialCommunityIcons color={mobilePalette.gold} name="star" size={16} /> {caddie.ratingAverage.toFixed(1)} · {caddie.reviewCount} {caddie.reviewCount === 1 ? "review" : "reviews"}</Text></View></View>
+          <View style={[styles.stats, compact && styles.statsCompact]}><Stat compact={compact} label="Caddie rate" value={formatMoney(caddie.rate.amountInCentavos)} /><Stat compact={compact} label="Rounds played" value={String(caddie.completedRounds)} /></View>
           <Section title="About"><Text selectable style={styles.body}>{caddie.bio || "Profile details will be shared by the caddie soon."}</Text></Section>
           <Section title="Specialties"><View style={styles.tags}>{caddie.specialties.length ? caddie.specialties.map((specialty) => <Text key={specialty} style={styles.tag}>{specialty}</Text>) : <Text style={styles.meta}>Specialties not listed</Text>}</View></Section>
           <Section title="Languages"><Text selectable style={styles.body}>{caddie.languages.join(", ") || "Not listed"}</Text></Section>
         </ScrollView>
-        <View style={styles.actionArea}><Pressable accessibilityLabel={`Start booking with ${caddie.displayName}`} accessibilityRole="button" onPress={onBook} style={styles.bookButton}><Text style={styles.bookText}>Start booking with {caddie.displayName.split(" ")[0]}</Text><MaterialCommunityIcons color={mobilePalette.gold} name="arrow-right" size={19} /></Pressable><Text style={styles.scheduleNote}>A preferred caddie is a request. The club confirms the final assignment.</Text></View>
+        <View style={styles.actionArea}><Pressable accessibilityLabel={`Start booking with ${caddie.displayName}`} accessibilityRole="button" onPress={onBook} style={({ pressed }) => [styles.bookButton, pressed && styles.pressed]}><Text style={styles.bookText}>Book with {caddie.displayName.split(" ")[0]}</Text><MaterialCommunityIcons color={mobilePalette.gold} name="arrow-top-right" size={19} /></Pressable><Text style={styles.scheduleNote}>A preferred caddie is a request. The club confirms the final assignment.</Text></View>
       </View>
     </View>
   </Modal>;
 }
 
 function Section({ children, title }: { children: React.ReactNode; title: string }) { return <View style={styles.section}><Text style={styles.sectionTitle}>{title}</Text>{children}</View>; }
-function Stat({ icon, label, value }: { icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"]; label: string; value: string }) { return <View style={styles.stat}><View style={styles.statIcon}><MaterialCommunityIcons color={mobilePalette.gold} name={icon} size={21} /></View><View style={styles.statCopy}><Text style={styles.statLabel}>{label}</Text><Text adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1} selectable style={styles.statValue}>{value}</Text></View></View>; }
+function Stat({ compact, label, value }: { compact: boolean; label: string; value: string }) {
+  return <View style={[styles.stat, compact && styles.statCompact]}><Text style={styles.statLabel}>{label}</Text><Text selectable style={styles.statValue}>{value}</Text></View>;
+}
 
 const styles = StyleSheet.create({
-  avatar: { backgroundColor: mobilePalette.forest, borderColor: mobilePalette.gold, borderWidth: 2 },
-  actionArea: { backgroundColor: colors.surface, gap: spacing.sm, paddingHorizontal: spacing.lg, paddingTop: spacing.md }, backdrop: { backgroundColor: "rgba(23, 32, 27, 0.45)", flex: 1, justifyContent: "flex-end" }, body: { color: colors.ink, fontSize: typography.body, lineHeight: 23 }, bookButton: { alignItems: "center", backgroundColor: mobilePalette.forest, borderCurve: "continuous", borderRadius: 11, boxShadow: "0 5px 12px rgba(23, 63, 53, 0.2)", flexDirection: "row", gap: spacing.sm, justifyContent: "center", minHeight: 50, paddingHorizontal: spacing.md }, bookText: { color: colors.surface, fontSize: typography.body, fontWeight: "800", textAlign: "center" }, classLabel: { color: mobilePalette.forest, fontSize: 10, fontWeight: "800", letterSpacing: 1.1, textTransform: "uppercase" }, closeButton: { alignItems: "center", backgroundColor: mobilePalette.goldSoft, borderRadius: 99, height: 40, justifyContent: "center", width: 40 }, content: { gap: 18, paddingHorizontal: spacing.lg, paddingBottom: spacing.xl, paddingTop: spacing.sm }, handle: { alignSelf: "center", backgroundColor: mobilePalette.gold, borderRadius: 999, height: 4, marginTop: spacing.sm, width: 48 }, identity: { alignItems: "center", flexDirection: "row", gap: spacing.md }, identityCopy: { flex: 1, gap: 4, minWidth: 0 }, meta: { color: colors.muted, fontSize: 12, lineHeight: 17 }, name: { color: colors.ink, fontSize: 22, fontWeight: "800", letterSpacing: -0.55 }, rating: { alignItems: "center", color: mobilePalette.forest, flexDirection: "row", fontSize: 14, fontWeight: "700" }, scheduleNote: { color: colors.muted, fontSize: 11, lineHeight: 16, textAlign: "center" }, section: { borderTopColor: mobilePalette.line, borderTopWidth: StyleSheet.hairlineWidth, gap: spacing.sm, paddingTop: 14 }, sectionTitle: { color: mobilePalette.forest, fontSize: 10, fontWeight: "800", letterSpacing: 1.5, textTransform: "uppercase" }, sheet: { alignSelf: "center", maxWidth: 720, width: "100%", backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: "92%", minHeight: "70%", overflow: "hidden" }, sheetHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", paddingHorizontal: spacing.lg, paddingVertical: spacing.xs }, stat: { alignItems: "center", backgroundColor: mobilePalette.forest, borderCurve: "continuous", borderRadius: 10, flex: 1, flexDirection: "row", gap: 10, minHeight: 74, padding: spacing.md }, statCopy: { flex: 1, gap: 2, minWidth: 0 }, statIcon: { alignItems: "center", backgroundColor: mobilePalette.forestDark, borderRadius: 99, height: 44, justifyContent: "center", width: 44 }, statLabel: { color: mobilePalette.onGreenMuted, fontSize: 10, fontWeight: "800", letterSpacing: 1, textTransform: "uppercase" }, statValue: { color: colors.surface, fontSize: 16, fontWeight: "800" }, stats: { flexDirection: "row", gap: spacing.sm }, tag: { alignItems: "center", backgroundColor: mobilePalette.goldSoft, borderRadius: 99, color: mobilePalette.forest, fontSize: typography.small, fontWeight: "700", overflow: "hidden", paddingHorizontal: 12, paddingVertical: 8 }, tags: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }, verifiedLabel: { alignItems: "center", flexDirection: "row", gap: 5 }
+  backdrop: { backgroundColor: "rgba(16, 35, 29, 0.48)", flex: 1, justifyContent: "flex-end" },
+  sheet: { alignSelf: "center", backgroundColor: mobilePalette.white, borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: "hidden" },
+  handle: { alignSelf: "center", backgroundColor: "#D5D2C8", borderRadius: 999, height: 4, marginTop: 10, width: 40 },
+  sheetHeader: { alignItems: "center", flexDirection: "row", gap: 12, justifyContent: "space-between", paddingHorizontal: 24, paddingVertical: 16 },
+  sheetEyebrow: { color: mobilePalette.muted, flex: 1, fontSize: 10, lineHeight: 17, fontWeight: "600", letterSpacing: 1.6 },
+  closeButton: { alignItems: "center", backgroundColor: "#F0EEE7", borderColor: mobilePalette.line, borderWidth: 1, borderRadius: 999, height: 44, justifyContent: "center", width: 44 },
+  scroll: { flex: 1, minHeight: 0 },
+  content: { gap: 24, paddingHorizontal: 24, paddingBottom: 28, paddingTop: 8 },
+  identity: { alignItems: "center", flexDirection: "row", gap: 18 },
+  identityCopyCompact: { flex: 0, width: "100%" },
+  statCompact: { flex: 0 },
+  identityCompact: { alignItems: "flex-start", flexDirection: "column" },
+  avatar: { backgroundColor: mobilePalette.forest, borderColor: "#E2D3AF", borderWidth: 2 },
+  identityCopy: { flex: 1, gap: 8, minWidth: 0 },
+  name: { color: mobilePalette.forest, fontSize: 27, fontWeight: "600", letterSpacing: -.8, lineHeight: 34 },
+  verifiedLabel: { alignItems: "center", flexDirection: "row", gap: 5 },
+  classLabel: { color: mobilePalette.forest, flexShrink: 1, fontSize: 10, fontWeight: "600", letterSpacing: 1, lineHeight: 17, textTransform: "uppercase" },
+  meta: { color: mobilePalette.muted, fontSize: 12, lineHeight: 20 },
+  rating: { color: mobilePalette.forest, fontSize: 13, fontWeight: "600", lineHeight: 21 },
+  stats: { flexDirection: "row", gap: 12 },
+  statsCompact: { flexDirection: "column" },
+  stat: { backgroundColor: "#F7F5EF", borderColor: mobilePalette.line, borderWidth: 1, borderRadius: 18, flex: 1, gap: 10, padding: 18 },
+  statLabel: { color: mobilePalette.muted, fontSize: 10, fontWeight: "600", letterSpacing: 1, lineHeight: 17, textTransform: "uppercase" },
+  statValue: { color: mobilePalette.forest, fontSize: 21, fontWeight: "600", letterSpacing: -.5, lineHeight: 29 },
+  section: { borderTopColor: mobilePalette.line, borderTopWidth: 1, gap: 12, paddingTop: 22 },
+  sectionTitle: { color: mobilePalette.forest, fontSize: 18, fontWeight: "600", letterSpacing: -.4, lineHeight: 25 },
+  body: { color: "#525B50", fontSize: 14, lineHeight: 24 },
+  tags: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  tag: { backgroundColor: "#EDF0E8", borderRadius: 999, color: mobilePalette.forest, fontSize: 12, fontWeight: "500", lineHeight: 19, overflow: "hidden", paddingHorizontal: 14, paddingVertical: 9 },
+  actionArea: { backgroundColor: mobilePalette.white, borderTopColor: mobilePalette.line, borderTopWidth: 1, gap: 12, paddingHorizontal: 24, paddingTop: 18 },
+  bookButton: { alignItems: "center", backgroundColor: mobilePalette.forest, borderRadius: 999, flexDirection: "row", gap: 12, justifyContent: "center", minHeight: 54, paddingHorizontal: 20, paddingVertical: 15 },
+  bookText: { color: mobilePalette.white, flexShrink: 1, fontSize: 14, fontWeight: "600", lineHeight: 21, textAlign: "center" },
+  scheduleNote: { color: mobilePalette.muted, fontSize: 11, lineHeight: 18, textAlign: "center" },
+  pressed: { opacity: .7 },
 });
