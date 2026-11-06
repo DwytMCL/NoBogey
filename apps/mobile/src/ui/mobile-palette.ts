@@ -1,6 +1,9 @@
 /** Mobile-only palette derived from the landing page. Do not use in admin. */
 export const mobilePalette = {
   white: "#FCFBF7",
+  surface: "#FFFFFF",
+  ivory: "#F7F5EF",
+  sage: "#EDF0E8",
   forest: "#173F35",
   forestDark: "#10332B",
   greenSoft: "#173F35",

@@ -1,53 +1,59 @@
-import { router, useLocalSearchParams } from "expo-router";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Stack, router, useLocalSearchParams } from "expo-router";
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors, radius, spacing, typography } from "@nobogey/ui";
-import { PrimaryButton, ScreenSection } from "../../ui/booking-design";
-import { EmptyState } from "../../ui/EmptyState";
-import { localCoursePlaceholder } from "../../ui/local-image-placeholders";
-import { CaddieCard } from "../booking/components/MarketplaceCards";
+import { formatMoney } from "@nobogey/utils";
+import { MobileButton } from "../../ui/MobilePresentation";
+import { mobilePalette as palette } from "../../ui/mobile-palette";
+import { localCaddiePlaceholder, localCoursePlaceholder } from "../../ui/local-image-placeholders";
 import { ResponsiveContent } from "../../ui/ResponsiveContent";
 import { useMobileData } from "../data/useMobileData";
 
 export function CourseProfileScreen() {
-  const { caddies, courses } = useMobileData();
+  const { caddies, courses, isLoading } = useMobileData();
+  const { width } = useWindowDimensions();
   const { courseId } = useLocalSearchParams<{ courseId?: string }>();
   const course = courses.find((item) => item.id === courseId);
-  if (!course) return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><View style={styles.emptyPage}><EmptyState description="Course details will appear after the catalog service is connected." icon="golf" minHeight={700} title="Course unavailable" /></View></SafeAreaView>;
+  const header = <Stack.Screen options={{ headerStyle: { backgroundColor: palette.white }, headerTintColor: palette.forest }} />;
+  if (!course) return <SafeAreaView edges={["bottom", "left", "right"]} style={styles.safeArea}>{header}<ScrollView contentContainerStyle={styles.content}><ResponsiveContent style={styles.frame}><View style={styles.emptyCard}>{isLoading ? <ActivityIndicator color={palette.forest} accessibilityLabel="Loading course" /> : null}<Text accessibilityRole="header" style={styles.sectionTitle}>{isLoading ? "Loading course…" : "Course unavailable"}</Text><Text style={styles.body}>{isLoading ? "Getting the details for your next round." : "We couldn't find the details for this course."}</Text><MobileButton onPress={() => router.replace("/golfer/courses/all")}>Browse courses</MobileButton></View></ResponsiveContent></ScrollView></SafeAreaView>;
   const available = caddies.filter((item) => item.homeCourseId === course.id);
   const location = [course.city, course.province].filter(Boolean).join(", ");
-  return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent style={styles.frame}>
-    <View><View accessibilityLabel={`${course.name} course photo`} accessibilityRole="image" style={styles.heroImage}><Image resizeMode="cover" source={localCoursePlaceholder(course)} style={styles.heroPhoto} /></View><View style={styles.introCard}>{location ? <Text style={styles.kicker}>{location}</Text> : null}<Text accessibilityRole="header" style={styles.title}>{course.name}</Text><View style={styles.rule}/><View style={styles.stats}><Stat label="PAR" value={String(course.par)}/><Stat label="YARDS" value={course.yardage.toLocaleString()}/><Stat label="HOLES" value={String(course.holes)}/><Stat label="AVAILABLE" value={`${available.length} ${available.length === 1 ? "caddie" : "caddies"}`}/></View></View></View>
-    <View style={styles.caddiesSection}><ScreenSection title="Available caddies" action={available.length > 0 ? <Pressable accessibilityLabel="See all available caddies" accessibilityRole="button" hitSlop={8} onPress={() => router.push({ pathname: "/golfer/caddies", params: { courseId: course.id } })} style={styles.seeAllButton}><Text style={styles.seeAll}>See All</Text></Pressable> : undefined}>{available.length ? <ScrollView horizontal contentContainerStyle={styles.horizontalList} showsHorizontalScrollIndicator={false}>{available.map((caddie) => <CaddieCard caddie={caddie} key={caddie.id} onPress={() => router.push({ pathname: "/golfer/caddies/[caddieId]", params: { caddieId: caddie.id, courseId: course.id } })} />)}</ScrollView> : <View style={styles.emptyCaddies}><EmptyState description="There are no caddies listed for this course yet. Please check again later." icon="account-group-outline" minHeight={180} title="No caddies available" /></View>}</ScreenSection></View>
-    <View style={styles.locationCard}><View style={styles.locationCopy}><Text style={styles.kicker}>LOCATION</Text><Text style={styles.locationName}>{course.name}</Text>{location ? <Text style={styles.address}>⌾ {location}</Text> : null}<PrimaryButton label="Get Directions" /></View></View>
-  </ResponsiveContent></ScrollView></SafeAreaView>;
+  const cardWidth = Math.max(200, Math.min(300, width - 64));
+  return <SafeAreaView edges={["bottom", "left", "right"]} style={styles.safeArea}>{header}
+    <ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}>
+      <ResponsiveContent style={styles.frame}>
+        <View accessibilityLabel={`${course.name} course photo`} accessibilityRole="image" style={styles.hero}><Image resizeMode="cover" source={localCoursePlaceholder(course)} style={styles.heroPhoto} /></View>
+        <View style={styles.intro}>
+          <Text style={styles.eyebrow}>{location || "ON THE COURSE"}</Text>
+          <Text accessibilityRole="header" style={styles.title}>{course.name}</Text>
+          <View style={styles.stats}><Stat label="PAR" value={String(course.par)} /><Stat label="YARDS" value={course.yardage.toLocaleString()} /><Stat label="HOLES" value={String(course.holes)} /><Stat label="AVAILABLE" value={`${available.length} ${available.length === 1 ? "caddie" : "caddies"}`} /></View>
+        </View>
+        <View style={styles.section}>
+          <View style={styles.sectionHeading}><Text accessibilityRole="header" style={styles.sectionTitle}>Available caddies</Text>{available.length ? <Pressable accessibilityRole="button" accessibilityLabel="See all available caddies" onPress={() => router.push({ pathname: "/golfer/caddies", params: { courseId: course.id } })} style={styles.seeAllButton}><Text style={styles.seeAll}>See all</Text></Pressable> : null}</View>
+          {available.length ? <ScrollView horizontal contentContainerStyle={styles.horizontalList} showsHorizontalScrollIndicator={false}>{available.map((caddie) => <Pressable key={caddie.id} accessibilityRole="button" accessibilityLabel={`View ${caddie.displayName}'s profile`} onPress={() => router.push({ pathname: "/golfer/caddies/[caddieId]", params: { caddieId: caddie.id, courseId: course.id } })} style={({ pressed }) => [styles.caddieCard, { width: cardWidth }, pressed && styles.pressed]}>
+            <Image accessibilityLabel={`${caddie.displayName} profile photo`} source={localCaddiePlaceholder(caddie)} style={styles.caddiePhoto} />
+            <View style={styles.caddieCopy}><Text style={styles.caddieName}>{caddie.displayName}</Text><Text style={styles.body}>{caddie.yearsExperience} years experience · {caddie.ratingAverage.toFixed(1)} rating</Text><Text style={styles.rate}>{formatMoney(caddie.rate.amountInCentavos, caddie.rate.currency)}</Text></View>
+          </Pressable>)}</ScrollView> : <View style={styles.emptyCard}><Text accessibilityRole="header" style={styles.emptyTitle}>No caddies available</Text><Text style={styles.body}>There are no caddies listed for this course yet. Please check again later.</Text></View>}
+        </View>
+        <View style={styles.locationCard}><Text style={styles.eyebrow}>LOCATION</Text><Text style={styles.sectionTitle}>{course.name}</Text>{location ? <Text style={styles.body}>{location}</Text> : null}<MobileButton disabled>Get directions</MobileButton></View>
+      </ResponsiveContent>
+    </ScrollView>
+  </SafeAreaView>;
 }
 
-function Stat({ label, value }: { label: string; value: string }) { return <View style={styles.stat}><Text style={styles.kicker}>{label}</Text><Text style={styles.statValue}>{value}</Text></View>; }
+function Stat({ label, value }: { label: string; value: string }) { return <View style={styles.stat}><Text style={styles.statLabel}>{label}</Text><Text style={styles.statValue}>{value}</Text></View>; }
 
 const styles = StyleSheet.create({
-  address: { color: "#718075", fontSize: typography.body },
-  content: { gap: 44, paddingBottom: 48 },
-  caddiesSection: { paddingHorizontal: spacing.xl },
-  emptyCaddies: { width: "100%" },
-  emptyPage: { flex: 1, justifyContent: "center", padding: spacing.xl },
-  frame: { gap: spacing.xl },
-  description: { color: "#6B6A65", fontSize: 24, lineHeight: 30 },
-  heroImage: { alignItems: "center", backgroundColor: "#E7EEE9", height: 365, justifyContent: "center", width: "100%" },
-  heroPhoto: { height: "100%", width: "100%" },
-  horizontalList: { gap: spacing.lg },
-  introCard: { backgroundColor: colors.surface, borderColor: "#999890", borderRadius: 12, borderWidth: 1, elevation: 4, gap: spacing.md, marginHorizontal: spacing.xl, marginTop: -78, padding: spacing.xl, shadowColor: "#000", shadowOpacity: 0.18, shadowRadius: 5 },
-  kicker: { color: "#6F8176", fontSize: typography.small, fontWeight: "700", letterSpacing: 2, textTransform: "uppercase" },
-  locationCard: { backgroundColor: colors.surface, borderColor: "#999890", borderRadius: radius.md, borderWidth: 1, marginHorizontal: spacing.xl, overflow: "hidden" },
-  locationCopy: { gap: spacing.md, padding: spacing.xl },
-  locationName: { color: "#24543D", fontSize: 25, fontWeight: "800", lineHeight: 30 },
-  mapPlaceholder: { backgroundColor: colors.fairwayDark, height: 180 },
-  rule: { backgroundColor: "#30302C", height: 1, marginVertical: spacing.md },
-  safeArea: { backgroundColor: "#FAF9F6", flex: 1 },
-  seeAll: { color: "#417A59", fontSize: typography.body, fontWeight: "800" },
-  seeAllButton: { justifyContent: "center", minHeight: 44 },
-  stat: { flexBasis: "45%", gap: 3 },
-  statValue: { color: "#17201B", fontSize: typography.body, fontWeight: "800" },
-  stats: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xl, justifyContent: "space-between" },
-  title: { color: "#000000", fontSize: 36, fontWeight: "800", letterSpacing: -1, lineHeight: 42 }
+  safeArea: { backgroundColor: palette.white, flex: 1 }, content: { padding: 24, paddingTop: 12, paddingBottom: 40 }, frame: { gap: 28 },
+  hero: { aspectRatio: 1.4, maxHeight: 360, backgroundColor: palette.sage, borderRadius: 24, overflow: "hidden", width: "100%" }, heroPhoto: { width: "100%", height: "100%" },
+  intro: { gap: 16 }, eyebrow: { color: palette.muted, fontFamily: "Inter", fontSize: 10, fontWeight: "600", letterSpacing: 1.6, lineHeight: 18, textTransform: "uppercase" },
+  title: { color: palette.forest, fontFamily: "Inter", fontSize: 36, fontWeight: "500", letterSpacing: -1.4, lineHeight: 43 },
+  stats: { flexDirection: "row", flexWrap: "wrap", gap: 12 }, stat: { backgroundColor: palette.ivory, borderRadius: 16, flexBasis: "45%", flexGrow: 1, minWidth: 100, gap: 10, padding: 18 },
+  statLabel: { color: palette.muted, fontFamily: "Inter", fontSize: 10, fontWeight: "600", letterSpacing: 1, lineHeight: 17 }, statValue: { color: palette.forest, fontFamily: "Inter", fontSize: 18, fontWeight: "500", lineHeight: 25 },
+  section: { borderTopColor: palette.line, borderTopWidth: 1, paddingTop: 24, gap: 18 }, sectionHeading: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", justifyContent: "space-between", gap: 12 },
+  sectionTitle: { color: palette.forest, flexShrink: 1, fontFamily: "Inter", fontSize: 23, fontWeight: "500", letterSpacing: -0.7, lineHeight: 30 },
+  body: { color: palette.muted, fontFamily: "Inter", fontSize: 13, lineHeight: 22 }, emptyCard: { backgroundColor: palette.ivory, borderColor: palette.line, borderWidth: 1, borderRadius: 20, gap: 14, padding: 24 },
+  emptyTitle: { color: palette.forest, fontFamily: "Inter", fontSize: 19, fontWeight: "500", lineHeight: 26, letterSpacing: -0.4 },
+  horizontalList: { gap: 16 }, caddieCard: { backgroundColor: palette.surface, borderColor: palette.line, borderWidth: 1, borderRadius: 20, overflow: "hidden" }, caddiePhoto: { height: 180, width: "100%", resizeMode: "cover" }, caddieCopy: { gap: 10, padding: 18 },
+  caddieName: { color: palette.forest, fontFamily: "Inter", fontSize: 20, fontWeight: "500", letterSpacing: -0.5, lineHeight: 27 }, rate: { color: palette.forest, fontFamily: "Inter", fontSize: 14, fontWeight: "600", lineHeight: 21 },
+  locationCard: { backgroundColor: palette.surface, borderColor: palette.line, borderWidth: 1, borderRadius: 22, padding: 24, gap: 16 }, seeAllButton: { justifyContent: "center", minHeight: 44, paddingHorizontal: 4 }, seeAll: { color: palette.forest, fontFamily: "Inter", fontSize: 12, fontWeight: "600", lineHeight: 20 }, pressed: { opacity: 0.8 }
 });

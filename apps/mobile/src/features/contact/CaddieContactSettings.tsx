@@ -1,5 +1,6 @@
 import { StyleSheet, Switch, Text, TextInput, View } from "react-native";
-import { colors, spacing } from "@nobogey/ui";
+import { spacing } from "@nobogey/ui";
+import { mobilePalette as palette } from "../../ui/mobile-palette";
 import { useCaddieContact } from "./CaddieContactProvider";
 
 export function CaddieContactSettings() {
@@ -12,22 +13,22 @@ export function CaddieContactSettings() {
 }
 
 function ContactField({ autoCapitalize, keyboardType, label, onChangeText, value }: { autoCapitalize?: "none"; keyboardType: "email-address" | "phone-pad"; label: string; onChangeText: (value: string) => void; value: string }) {
-  return <View style={styles.field}><Text style={styles.label}>{label}</Text><TextInput accessibilityLabel={label} autoCapitalize={autoCapitalize} keyboardType={keyboardType} onChangeText={onChangeText} placeholder={label} placeholderTextColor={colors.textMuted} style={styles.input} value={value} /></View>;
+  return <View style={styles.field}><Text style={styles.label}>{label}</Text><TextInput accessibilityLabel={label} autoCapitalize={autoCapitalize} keyboardType={keyboardType} onChangeText={onChangeText} placeholder={label} placeholderTextColor={palette.muted} style={styles.input} value={value} /></View>;
 }
 
 function ShareRow({ label, onValueChange, value }: { label: string; onValueChange: (value: boolean) => void; value: boolean }) {
-  return <View style={styles.shareRow}><Text style={styles.shareLabel}>{label}</Text><Switch accessibilityLabel={label} accessibilityRole="switch" onValueChange={onValueChange} trackColor={{ false: colors.border, true: colors.primary }} value={value} /></View>;
+  return <View style={styles.shareRow}><Text style={styles.shareLabel}>{label}</Text><Switch accessibilityLabel={label} accessibilityRole="switch" onValueChange={onValueChange} thumbColor={palette.surface} ios_backgroundColor={palette.line} trackColor={{ false: palette.line, true: palette.forest }} value={value} /></View>;
 }
 
 const styles = StyleSheet.create({
   content: { gap: spacing.md },
-  copy: { color: colors.textMuted, fontSize: 14, lineHeight: 20 },
-  card: { backgroundColor: colors.surface, borderColor: colors.border, borderCurve: "continuous", borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, gap: spacing.md, padding: spacing.md },
+  copy: { color: palette.muted, fontFamily: "Inter", fontSize: 14, lineHeight: 20 },
+  card: { backgroundColor: palette.surface, borderColor: palette.line, borderCurve: "continuous", borderRadius: 18, borderWidth: 1, gap: spacing.md, padding: spacing.md },
   field: { gap: spacing.xs },
-  input: { backgroundColor: "#FBFCF9", borderColor: colors.border, borderCurve: "continuous", borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, color: colors.text, fontSize: 15, minHeight: 50, paddingHorizontal: spacing.md },
-  label: { color: colors.text, fontSize: 13, fontWeight: "800" },
-  shareLabel: { color: colors.text, flex: 1, fontSize: 14, fontWeight: "700" },
+  input: { backgroundColor: palette.white, borderColor: palette.line, borderCurve: "continuous", borderRadius: 14, borderWidth: 1, color: palette.ink, fontFamily: "Inter", fontSize: 15, minHeight: 54, paddingHorizontal: 16, paddingVertical: 14 },
+  label: { color: palette.ink, fontFamily: "Inter", fontSize: 12, lineHeight: 20, fontWeight: "600" },
+  shareLabel: { color: palette.forest, flex: 1, minWidth: 0, fontFamily: "Inter", fontSize: 13, lineHeight: 21, fontWeight: "500" },
   section: { gap: spacing.sm },
-  sectionTitle: { color: colors.fairwayDark, fontSize: 11, fontWeight: "800", letterSpacing: 0.9, textTransform: "uppercase" },
-  shareRow: { alignItems: "center", borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: "row", justifyContent: "space-between", minHeight: 56, paddingTop: spacing.sm }
+  sectionTitle: { color: palette.forest, fontFamily: "Inter", fontSize: 10, lineHeight: 17, fontWeight: "600", letterSpacing: 0.9, textTransform: "uppercase" },
+  shareRow: { gap: 16, alignItems: "center", borderTopColor: palette.line, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: "row", justifyContent: "space-between", minHeight: 56, paddingTop: spacing.sm }
 });
