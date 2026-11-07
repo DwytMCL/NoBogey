@@ -39,6 +39,15 @@ export function describeUserError(reason: unknown, fallback: string): string {
   if (/user_already_exists|user already registered|already been registered|already has an account/.test(diagnostic)) {
     return "This email already has a NoBogey account. Sign in instead or reset your password.";
   }
+  if (/email_address_invalid|invalid_email_address|invalid email address|email.*invalid/.test(diagnostic)) {
+    return "Enter a valid email address and try again.";
+  }
+  if (/email_address_not_authorized/.test(diagnostic)) {
+    return "NoBogey could not send a verification email to that address. Check the address and try again.";
+  }
+  if (/smtp|error sending (confirmation|recovery|email)|failed to send (confirmation|recovery|email)/.test(diagnostic)) {
+    return "NoBogey could not send the email right now. Please try again shortly.";
+  }
   if (/over_email_send_rate_limit|email rate limit|rate.?limit|too many requests|429/.test(diagnostic)) {
     return "Too many attempts were made. Please wait a few minutes and try again.";
   }

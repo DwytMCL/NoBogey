@@ -4,7 +4,7 @@ import { router, useLocalSearchParams, usePathname } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { describeUserError } from '@nobogey/utils';
+import { describeUserError, isValidEmailAddress } from '@nobogey/utils';
 
 import { establishSessionFromMobileAuthCallback, parseMobileAuthCallback } from '../../../backend/auth/auth-callback';
 import { requestPasswordReset, updatePassword } from '../../../backend/auth/auth.service';
@@ -45,7 +45,7 @@ export function PasswordResetScreen() {
   }, [callbackUrl, parsedCallback?.kind]);
 
   const requestReset = async () => {
-    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+    if (!isValidEmailAddress(email)) {
       setMessage('Enter a valid email address linked to your account.');
       return;
     }

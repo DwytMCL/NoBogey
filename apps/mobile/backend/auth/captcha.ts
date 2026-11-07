@@ -1,30 +1,62 @@
 import * as Linking from "expo-linking";
-import { isAllowedMobileCaptchaCallback, MOBILE_CAPTCHA_CALLBACKS, shouldBypassMobileCaptcha } from "./captcha-validation";
+import { extractMobileCaptchaToken, MOBILE_CAPTCHA_CALLBACKS, shouldBypassMobileCaptcha } from "./captcha-validation";
 
 const CAPTCHA_URL = "https://nobogeyofficial.com/mobile-captcha";
+
+type PendingCaptcha = {
+  id: symbol;
+  reject: (reason: Error) => void;
+  resolve: (token: string) => void;
+  subscription: ReturnType<typeof Linking.addEventListener>;
+  timeout: ReturnType<typeof setTimeout>;
+};
+
+let pendingCaptcha: PendingCaptcha | undefined;
+
+function clearPendingCaptcha(expectedId?: symbol): PendingCaptcha | undefined {
+  if (expectedId && pendingCaptcha?.id !== expectedId) return undefined;
+  const pending = pendingCaptcha;
+  pendingCaptcha = undefined;
+  if (pending) {
+    clearTimeout(pending.timeout);
+    pending.subscription.remove();
+  }
+  return pending;
+}
+
+/** Resolve the active challenge from the Expo route as a fallback to the Linking event. */
+export function resolveMobileCaptchaToken(token: string): boolean {
+  const normalized = token.trim();
+  if (!normalized) return false;
+  const pending = clearPendingCaptcha();
+  if (!pending) return false;
+  pending.resolve(normalized);
+  return true;
+}
+
+function acceptMobileCaptchaCallback(url: string): boolean {
+  const token = extractMobileCaptchaToken(url);
+  return token ? resolveMobileCaptchaToken(token) : false;
+}
 
 export async function completeMobileCaptcha(): Promise<string> {
   if (shouldBypassMobileCaptcha()) return "development-bypass";
 
   const callbackUrl = MOBILE_CAPTCHA_CALLBACKS[0];
   const token = await new Promise<string>((resolve, reject) => {
+    clearPendingCaptcha()?.reject(new Error("A newer security check was started."));
+    const challengeId = Symbol("mobile-captcha");
     const timeout = setTimeout(() => {
-      subscription.remove();
-      reject(new Error("Security check timed out. Please try again."));
+      const pending = clearPendingCaptcha(challengeId);
+      pending?.reject(new Error("Security check timed out. Please try again."));
     }, 120_000);
     const subscription = Linking.addEventListener("url", ({ url }) => {
-      if (!isAllowedMobileCaptchaCallback(url)) return;
-      clearTimeout(timeout);
-      subscription.remove();
-      const parsed = Linking.parse(url);
-      const value = parsed.queryParams?.token;
-      if (typeof value === "string" && value) resolve(value);
-      else reject(new Error("Security check was not completed."));
+      acceptMobileCaptchaCallback(url);
     });
+    pendingCaptcha = { id: challengeId, reject, resolve, subscription, timeout };
     void Linking.openURL(`${CAPTCHA_URL}?return_to=${encodeURIComponent(callbackUrl)}`).catch((error) => {
-      clearTimeout(timeout);
-      subscription.remove();
-      reject(error);
+      const pending = clearPendingCaptcha(challengeId);
+      pending?.reject(error instanceof Error ? error : new Error("Security check could not be opened."));
     });
   });
 

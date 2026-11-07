@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isAllowedMobileCaptchaCallback, shouldBypassMobileCaptcha } from "./captcha-validation";
+import { extractMobileCaptchaToken, isAllowedMobileCaptchaCallback, shouldBypassMobileCaptcha } from "./captcha-validation";
 
 describe("mobile captcha validation", () => {
   it("accepts both Expo and custom-scheme callback URLs", () => {
@@ -9,6 +9,13 @@ describe("mobile captcha validation", () => {
     expect(isAllowedMobileCaptchaCallback("https://nobogeyofficial.com/mobile-captcha")).toBe(false);
     expect(isAllowedMobileCaptchaCallback("nobogey://captcha.attacker.example?token=test")).toBe(false);
     expect(isAllowedMobileCaptchaCallback("nobogey://captcha/extra?token=test")).toBe(false);
+  });
+
+  it("extracts tokens only from allow-listed callback URLs", () => {
+    expect(extractMobileCaptchaToken("nobogey://captcha?token=valid-token")).toBe("valid-token");
+    expect(extractMobileCaptchaToken("exp+nobogey-mobile://captcha?token=expo-token")).toBe("expo-token");
+    expect(extractMobileCaptchaToken("https://attacker.example/captcha?token=stolen")).toBeNull();
+    expect(extractMobileCaptchaToken("nobogey://captcha")).toBeNull();
   });
 
   it("allows explicit bypasses for local QA and testing", () => {

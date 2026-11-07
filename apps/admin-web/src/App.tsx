@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Select } from "./Select";
 import { colors } from "@nobogey/ui";
-import { describeUserError } from "@nobogey/utils";
+import { describeUserError, isValidEmailAddress, normalizeEmailAddress } from "@nobogey/utils";
 import brandLogo from "../../../assets/logo/NoBogey-Logo.png";
 import { CaddieVerificationQueue } from "./features/caddie-verification/CaddieVerificationQueue";
 import { AdminNotifications } from "./features/notifications/AdminNotifications";
@@ -70,6 +70,7 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (!isValidEmailAddress(email)) return setError("Enter a valid administrator email address.");
     setSubmitting(true);
     setError("");
     try {
@@ -91,13 +92,13 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
   };
 
   const forgot = async () => {
-    if (!email.trim()) return setError("Enter your email address first.");
+    if (!isValidEmailAddress(email)) return setError("Enter a valid administrator email address first.");
     setSubmitting(true);
     setError("");
     setNotice("");
     try {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-        email.trim().toLowerCase(),
+        normalizeEmailAddress(email),
         adminPasswordResetOptions(window.location.origin, captchaToken)
       );
       if (resetError) throw resetError;
@@ -183,7 +184,7 @@ function SupabaseCaddies() {
   const [email, setEmail] = useState(""); const [name, setName] = useState("");
   const [tier, setTier] = useState<Tier>("CLASS A"); const [rate, setRate] = useState("1500"); const [years, setYears] = useState("5");
   const [saving, setSaving] = useState(false); const [message, setMessage] = useState("");
-  const enroll = async () => { if (!email.trim() || !name.trim()) return setMessage("Email and full name are required."); setSaving(true); setMessage(""); try { await addCaddie(email, name, tier, Number(rate), Number(years)); setEmail(""); setName(""); setMessage("Caddie saved to Supabase. Assign published tee-time availability before accepting bookings."); } catch (cause) { setMessage(describeAdminBackendError(cause, "The caddie could not be saved. Please try again.")); } finally { setSaving(false); } };
+  const enroll = async () => { if (!isValidEmailAddress(email) || !name.trim()) return setMessage("Enter a valid account email and full name."); setSaving(true); setMessage(""); try { await addCaddie(normalizeEmailAddress(email), name, tier, Number(rate), Number(years)); setEmail(""); setName(""); setMessage("Caddie saved to Supabase. Assign published tee-time availability before accepting bookings."); } catch (cause) { setMessage(describeAdminBackendError(cause, "The caddie could not be saved. Please try again.")); } finally { setSaving(false); } };
   return <main className="editor"><p className="eyebrow">Caddies · directory</p><h1>Caddie Onboarding</h1><section className="card add-caddie"><small>Add a caddie</small><label>Account email<input type="email" value={email} placeholder="caddie@example.com" onChange={event => setEmail(event.target.value)} /></label><label>Full name<input value={name} placeholder="e.g. Miguel Santos" onChange={event => setName(event.target.value)} /></label><label>Caddie tier<Select value={tier} onChange={event => setTier(event.target.value as Tier)}>{Object.entries(tierLabels).map(([key, value]) => <option key={key} value={key}>{value}</option>)}</Select></label><label>Caddie rate (₱ per round)<input min="0" type="number" value={rate} onChange={event => setRate(event.target.value)} /></label><label>Years of experience<input min="0" max="80" type="number" value={years} onChange={event => setYears(event.target.value)} /></label>{message ? <p className={message.includes("saved") ? "verification-success" : "error"}>{message}</p> : null}<button className="primary" disabled={saving} onClick={() => void enroll()}>{saving ? "Saving to Supabase…" : "＋ Add caddie"}</button></section></main>;
 }
 

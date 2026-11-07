@@ -20,6 +20,10 @@ describe("describeUserError", () => {
       .toContain("Sign in instead");
     expect(describeUserError({ code: "over_email_send_rate_limit" }, "Unable to send email."))
       .toContain("wait a few minutes");
+    expect(describeUserError({ code: "email_address_not_authorized" }, "Unable to create account."))
+      .toContain("verification email");
+    expect(describeUserError({ message: "Error sending confirmation email" }, "Unable to create account."))
+      .toContain("could not send the email");
   });
 
   it("uses the supplied safe fallback for unknown infrastructure errors", () => {

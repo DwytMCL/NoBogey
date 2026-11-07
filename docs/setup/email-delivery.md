@@ -57,9 +57,13 @@ Set the following hosted Edge Function secrets:
 ```text
 RESEND_API_KEY=<same restricted Resend sending key>
 BOOKING_EMAIL_FROM=NoBogey Bookings <bookings@auth.nobogeyofficial.com>
+OUTBOX_DISPATCH_SECRET=<random scheduler credential>
+BOOKING_MAINTENANCE_SECRET=<different random scheduler credential>
 ```
 
 The dispatcher uses each outbox row ID as the Resend idempotency key, so a retry cannot create a second provider submission within Resend's idempotency window.
+
+The `schedule_backend_workers` migration reads the custom API origin and matching worker credentials from Supabase Vault. Keep the Vault values and Edge Function secrets synchronized; never place their values in source control.
 
 ## Cutover verification
 

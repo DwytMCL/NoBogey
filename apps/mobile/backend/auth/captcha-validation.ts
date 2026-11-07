@@ -18,6 +18,12 @@ export function isAllowedMobileCaptchaCallback(url: string): boolean {
   }
 }
 
+export function extractMobileCaptchaToken(url: string): string | null {
+  if (!isAllowedMobileCaptchaCallback(url)) return null;
+  const token = new URL(url).searchParams.get("token")?.trim();
+  return token || null;
+}
+
 export function shouldBypassMobileCaptcha(): boolean {
   return process.env.NODE_ENV !== "production" && process.env.EXPO_PUBLIC_BYPASS_CAPTCHA === "true";
 }

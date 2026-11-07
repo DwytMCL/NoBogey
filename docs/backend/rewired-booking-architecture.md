@@ -163,6 +163,9 @@ The email dispatcher now enforces its 10-second provider timeout. Database state
 | `BOOKING_EMAIL_FROM` | Edge secret/config | Verified sender identity. |
 | `OUTBOX_DISPATCH_SECRET` | Edge secret | Authenticates scheduler calls to email dispatch. |
 | `BOOKING_MAINTENANCE_SECRET` | Edge secret | Separate credential for booking maintenance calls. |
+| `nobogey_project_url` | Vault secret | Custom Supabase API origin used by the database scheduler. |
+| `nobogey_outbox_dispatch_secret` | Vault secret | Scheduler copy of `OUTBOX_DISPATCH_SECRET`. |
+| `nobogey_booking_maintenance_secret` | Vault secret | Scheduler copy of `BOOKING_MAINTENANCE_SECRET`. |
 | `LOAD_TEST_DATABASE_URL` and fixture IDs | Local/staging only | Direct database target and hot-slot fixtures for the contention harness. |
 
 Use separate values per environment, rotate server secrets after suspected disclosure, and never prefix server secrets with `EXPO_PUBLIC_` or `VITE_`. Repository example files contain placeholders only for new server secrets.
@@ -173,7 +176,7 @@ Use separate values per environment, rotate server secrets after suspected discl
 2. Apply `booking_status_values` first, then `booking_workflow_reliability` during a maintenance window.
 3. Verify constraints, grants, advisor output, canonical search, create/accept/cancel/expire paths, and outbox claims.
 4. Deploy `booking-maintenance` and the updated `send-booking-emails` functions with separate random secrets.
-5. Schedule maintenance every minute and email dispatch at a rate compatible with the provider quota.
+5. Apply `schedule_backend_workers` to run email dispatch every minute and booking maintenance every five minutes.
 6. Deploy mobile/admin clients only after the database is backward-compatible.
 
 The migrations are additive. If application rollout fails, roll clients back while leaving the new tables/columns in place. Do not drop data to roll back. Forward recovery means correcting functions/policies in a new migration. A full database restore is reserved for migration-level corruption.

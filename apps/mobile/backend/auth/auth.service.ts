@@ -1,9 +1,16 @@
 /** Supabase Auth and application-role provisioning for the mobile app. */
 import { getSupabaseClient } from '../client';
 import { getBackendConfig } from '../shared/config';
+import { isValidEmailAddress, normalizeEmailAddress } from '@nobogey/utils';
 import type { AuthSession, SignInInput, SignUpInput, SignUpResult } from './auth.types';
 
 type MobileRole = Extract<AuthSession['roles'][number], 'golfer' | 'caddie'>;
+
+function requireValidEmailAddress(value: string): string {
+  const email = normalizeEmailAddress(value);
+  if (!isValidEmailAddress(email)) throw new Error('INVALID_EMAIL_ADDRESS');
+  return email;
+}
 
 async function toAuthSession(userId: string, email: string, accessToken: string, expiresAt: number): Promise<AuthSession> {
   const { data, error } = await getSupabaseClient().from('user_roles').select('role').eq('user_id', userId);
@@ -27,7 +34,7 @@ export async function signUp(input: SignUpInput): Promise<SignUpResult> {
   const client = getSupabaseClient();
   const { appUrl } = getBackendConfig();
   const { data, error } = await client.auth.signUp({
-    email: input.email.trim().toLowerCase(),
+    email: requireValidEmailAddress(input.email),
     password: input.password,
     options: {
       captchaToken: input.captchaToken,
@@ -50,7 +57,7 @@ export async function signUp(input: SignUpInput): Promise<SignUpResult> {
 export async function signIn(input: SignInInput): Promise<AuthSession> {
   const client = getSupabaseClient();
   const { data, error } = await client.auth.signInWithPassword({
-    email: input.email.trim().toLowerCase(),
+    email: requireValidEmailAddress(input.email),
     password: input.password,
     options: { captchaToken: input.captchaToken },
   });
@@ -92,7 +99,7 @@ export async function completeConfirmedSignup(): Promise<MobileRole | null> {
 /** Send the account recovery email through Supabase Auth. */
 export async function requestPasswordReset(email: string, captchaToken: string): Promise<void> {
   const { appUrl } = getBackendConfig();
-  const { error } = await getSupabaseClient().auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+  const { error } = await getSupabaseClient().auth.resetPasswordForEmail(requireValidEmailAddress(email), {
     captchaToken,
     redirectTo: `${appUrl.replace(/\/$/, '')}/mobile-auth/recovery`,
   });

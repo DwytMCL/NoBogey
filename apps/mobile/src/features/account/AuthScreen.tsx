@@ -4,7 +4,7 @@ import { Feather } from '@expo/vector-icons';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from '@nobogey/ui';
-import { describeUserError } from '@nobogey/utils';
+import { describeUserError, isValidEmailAddress } from '@nobogey/utils';
 
 import { ensureCurrentUserRole, signIn, signUp } from '../../../backend/auth/auth.service';
 import { completeMobileCaptcha } from '../../../backend/auth/captcha';
@@ -70,6 +70,10 @@ export function AuthScreen() {
   };
 
   const submit = () => {
+    if (!isValidEmailAddress(email)) {
+      setMessage('Enter a valid email address. You can use Gmail or any personal, work, school, or organization email.');
+      return;
+    }
     if (mode === 'login') {
       void authenticate();
       return;
